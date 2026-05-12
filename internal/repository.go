@@ -88,6 +88,24 @@ func (p *PeerManager) GetByID(ctx context.Context, id uuid.UUID) (*Peer, error) 
 	return peer, nil
 }
 
+func (p *PeerManager) GetByRole(ctx context.Context, role Role) (*Peer, error) {
+	query := `
+	SELECT id, role, is_online, addr_port, connection_time
+	FROM peers
+	WHERE role = $1
+	`
+
+	res := p.db.QueryRow(ctx, query, role)
+	peer := &Peer{}
+	err := res.Scan(&peer.ID, &peer.Role,
+		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errors.New("Unknown peer role")
+	}
+	return peer, nil
+}
+
 func (p *PeerManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	query := `
 	DELETE FROM peers
@@ -108,4 +126,21 @@ func (p *PeerManager) ExistsByID(ctx context.Context, id uuid.UUID) (bool, error
 		return false, errors.New(err.Error())
 	}
 	return isExists, nil
+}
+
+func (p *PeerManager) GetLastByTime(ctx context.Context) (*Peer, error) {
+	query := `
+	SELECT id, role, is_online, addr_port, connection_time
+	FROM peers ORDER BY connection_time DESC LIMIT 1
+	`
+	res := p.db.QueryRow(ctx, query)
+	peer := &Peer{}
+	err := res.Scan(&peer.ID, &peer.Role,
+		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errors.New("Empty table")
+	}
+	return peer, nil
+
 }

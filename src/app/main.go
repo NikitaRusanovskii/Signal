@@ -18,50 +18,64 @@ func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 
 	ctx := context.Background()
-
 	cm := internal.NewConnectionManager(nil)
 	cm.Connect(ctx, dbURL)
 	defer cm.Disconnect()
 
 	pool, err := cm.GetPool()
 	if err != nil {
-		panic("cm.GetPool() error")
+		panic(err)
 	}
-	pm, err := internal.NewPeerManager(pool)
+	pr, err := internal.NewPeerManager(pool)
 	if err != nil {
-		panic("NewPeerManager() error")
+		panic(err)
+	}
+	ps := internal.NewPeerService(pr)
+
+	test_master_peer := internal.NewPeer(
+		uuid.New(),
+		internal.MasterRole,
+		true,
+		"192.0.0.1:1458",
+		time.Now(),
+	)
+
+	test_slave_peer := internal.NewPeer(
+		uuid.New(),
+		internal.SlaveRole,
+		true,
+		"102.1.23.1:1321",
+		time.Now(),
+	)
+
+	ps.RegisterPeer(ctx, test_master_peer)
+	ps.RegisterPeer(ctx, test_slave_peer)
+
+	ap_master, err := ps.GetMasterIP(ctx)
+	if err != nil {
+		panic(err)
 	}
 
-	test_peer := internal.NewPeer(uuid.New(), internal.MasterRole,
-		true, "192.0.0.51", time.Now())
-
-	err_insert := pm.Insert(ctx, test_peer)
-	if err_insert != nil {
-		fmt.Println(err_insert)
-		panic("insertion in db error")
+	ap_slave, err := ps.GetLastPeerIP(ctx)
+	if err != nil {
+		panic(err)
 	}
 
-	peer, err_getByID := pm.GetByID(ctx, test_peer.ID)
-	if err_getByID != nil {
-		panic("getByID from db error")
-	}
-	fmt.Println("addr:port: ", peer.AddrPort)
+	fmt.Println("Master IP:port : ", ap_master.String())
+	fmt.Println("Slave IP:port : ", ap_slave.String())
 
-	isExists, err_ExistsByID := pm.ExistsByID(ctx, test_peer.ID)
-	if err_ExistsByID != nil {
-		panic("existsByID from db error")
+	ps.UpdatePeerAddrPort(ctx, test_slave_peer.ID, "102.1.23.1:1322")
+	ap_slave2, err := ps.GetLastPeerIP(ctx)
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println("test_peer is exists: ", isExists)
+	fmt.Println("Slave IP:port : ", ap_slave2.String())
 
-	err_deleteByID := pm.DeleteByID(ctx, test_peer.ID)
-	if err_deleteByID != nil {
-		panic("deleteByID from db error")
+	ps.RemovePeer(ctx, test_slave_peer.ID)
+
+	ap_slave3, err := ps.GetLastPeerIP(ctx)
+	if err != nil {
+		panic(err)
 	}
-
-	isExists, err_ExistsByID = pm.ExistsByID(ctx, test_peer.ID)
-	if err_ExistsByID != nil {
-		panic("existsByID from db error")
-	}
-	fmt.Println("test_peer is exists: ", isExists)
-
+	fmt.Println("Slave IP:port : ", ap_slave3.String())
 }
