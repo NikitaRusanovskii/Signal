@@ -25,6 +25,7 @@ func (c *ConnectionManager) Connect(ctx context.Context, dbURL string) (*pgxpool
 	if err != nil {
 		return nil, err
 	}
+	c.db = pool
 	return pool, nil
 }
 
@@ -94,4 +95,17 @@ func (p *PeerManager) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	`
 	_, err := p.db.Exec(ctx, query, id)
 	return err
+}
+
+func (p *PeerManager) ExistsByID(ctx context.Context, id uuid.UUID) (bool, error) {
+	query := `
+		SELECT EXISTS(SELECT 1 FROM peers WHERE id = $1)
+	`
+	var isExists bool
+	res := p.db.QueryRow(ctx, query, id)
+	err := res.Scan(&isExists)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return false, errors.New(err.Error())
+	}
+	return isExists, nil
 }
