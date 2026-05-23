@@ -56,7 +56,7 @@ func main() {
 		panic(err)
 	}
 
-	ap_slave, err := ps.GetLastPeerIP(ctx)
+	ap_slave, err := ps.GetLastSlavePeerIP(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -65,17 +65,11 @@ func main() {
 	fmt.Println("Slave IP:port : ", ap_slave.String())
 
 	ps.UpdatePeerAddrPort(ctx, test_slave_peer.ID, "102.1.23.1:1322")
-	ap_slave2, err := ps.GetLastPeerIP(ctx)
+	ap_slave2, err := ps.GetLastSlavePeerIP(ctx)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("Slave IP:port : ", ap_slave2.String())
 
 	ps.RemovePeer(ctx, test_slave_peer.ID)
-
-	ap_slave3, err := ps.GetLastPeerIP(ctx)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Slave IP:port : ", ap_slave3.String())
 }

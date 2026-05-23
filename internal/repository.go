@@ -128,10 +128,10 @@ func (p *PeerManager) ExistsByID(ctx context.Context, id uuid.UUID) (bool, error
 	return isExists, nil
 }
 
-func (p *PeerManager) GetLastByTime(ctx context.Context) (*Peer, error) {
+func (p *PeerManager) GetLastSlaveByTime(ctx context.Context) (*Peer, error) {
 	query := `
 	SELECT id, role, is_online, addr_port, connection_time
-	FROM peers ORDER BY connection_time DESC LIMIT 1
+	FROM peers WHERE role='slave' ORDER BY connection_time DESC LIMIT 1
 	`
 	res := p.db.QueryRow(ctx, query)
 	peer := &Peer{}
@@ -139,7 +139,7 @@ func (p *PeerManager) GetLastByTime(ctx context.Context) (*Peer, error) {
 		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errors.New("Empty table")
+		return nil, errors.New("Slave is not exists")
 	}
 	return peer, nil
 

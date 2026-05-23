@@ -1,0 +1,1 @@
+~/go/bin/migrate -path ./migrations/ -database "postgres://admin:1337@localhost:5440/signal_db?sslmode=disable" up

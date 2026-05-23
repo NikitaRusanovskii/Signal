@@ -84,8 +84,8 @@ func (ps *PeerService) RemovePeer(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-func (ps *PeerService) GetLastPeerIP(ctx context.Context) (*netip.AddrPort, error) {
-	peer, err := ps.pr.GetLastByTime(ctx)
+func (ps *PeerService) GetLastSlavePeerIP(ctx context.Context) (*netip.AddrPort, error) {
+	peer, err := ps.pr.GetLastSlaveByTime(ctx)
 	if err != nil {
 		return nil, err
 	}
