@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"signal/internal"
+	"signal/internal/domain"
+	"signal/internal/repository"
+	"signal/internal/service"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,7 +20,7 @@ func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 
 	ctx := context.Background()
-	cm := internal.NewConnectionManager(nil)
+	cm := repository.NewConnectionManager(nil)
 	cm.Connect(ctx, dbURL)
 	defer cm.Disconnect()
 
@@ -26,23 +28,23 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	pr, err := internal.NewPeerManager(pool)
+	pr, err := repository.NewPeerManager(pool)
 	if err != nil {
 		panic(err)
 	}
-	ps := internal.NewPeerService(pr)
+	ps := service.NewPeerService(pr)
 
-	test_master_peer := internal.NewPeer(
+	test_master_peer := domain.NewPeer(
 		uuid.New(),
-		internal.MasterRole,
+		domain.MasterRole,
 		true,
 		"192.0.0.1:1458",
 		time.Now(),
 	)
 
-	test_slave_peer := internal.NewPeer(
+	test_slave_peer := domain.NewPeer(
 		uuid.New(),
-		internal.SlaveRole,
+		domain.SlaveRole,
 		true,
 		"102.1.23.1:1321",
 		time.Now(),

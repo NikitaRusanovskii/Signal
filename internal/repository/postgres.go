@@ -1,8 +1,9 @@
-package internal
+package repository
 
 import (
 	"context"
 	"errors"
+	"signal/internal/domain"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -51,7 +52,7 @@ func NewPeerManager(db *pgxpool.Pool) (*PeerManager, error) {
 	return &PeerManager{db: db}, nil
 }
 
-func (p *PeerManager) Insert(ctx context.Context, peer Peer) error {
+func (p *PeerManager) Insert(ctx context.Context, peer domain.Peer) error {
 	query := `
 		INSERT INTO peers (id, role, is_online, addr_port, connection_time)
 		VALUES ($1, $2, $3, $4, $5)
@@ -70,7 +71,7 @@ func (p *PeerManager) Insert(ctx context.Context, peer Peer) error {
 	return err
 }
 
-func (p *PeerManager) GetByID(ctx context.Context, id uuid.UUID) (*Peer, error) {
+func (p *PeerManager) GetByID(ctx context.Context, id uuid.UUID) (*domain.Peer, error) {
 	query := `
 	SELECT id, role, is_online, addr_port, connection_time
 	FROM peers
@@ -78,7 +79,7 @@ func (p *PeerManager) GetByID(ctx context.Context, id uuid.UUID) (*Peer, error) 
 	`
 
 	res := p.db.QueryRow(ctx, query, id)
-	peer := &Peer{}
+	peer := &domain.Peer{}
 	err := res.Scan(&peer.ID, &peer.Role,
 		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
 
@@ -88,7 +89,7 @@ func (p *PeerManager) GetByID(ctx context.Context, id uuid.UUID) (*Peer, error) 
 	return peer, nil
 }
 
-func (p *PeerManager) GetByRole(ctx context.Context, role Role) (*Peer, error) {
+func (p *PeerManager) GetByRole(ctx context.Context, role domain.Role) (*domain.Peer, error) {
 	query := `
 	SELECT id, role, is_online, addr_port, connection_time
 	FROM peers
@@ -96,7 +97,7 @@ func (p *PeerManager) GetByRole(ctx context.Context, role Role) (*Peer, error) {
 	`
 
 	res := p.db.QueryRow(ctx, query, role)
-	peer := &Peer{}
+	peer := &domain.Peer{}
 	err := res.Scan(&peer.ID, &peer.Role,
 		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
 
@@ -128,13 +129,13 @@ func (p *PeerManager) ExistsByID(ctx context.Context, id uuid.UUID) (bool, error
 	return isExists, nil
 }
 
-func (p *PeerManager) GetLastSlaveByTime(ctx context.Context) (*Peer, error) {
+func (p *PeerManager) GetLastSlaveByTime(ctx context.Context) (*domain.Peer, error) {
 	query := `
 	SELECT id, role, is_online, addr_port, connection_time
 	FROM peers WHERE role='slave' ORDER BY connection_time DESC LIMIT 1
 	`
 	res := p.db.QueryRow(ctx, query)
-	peer := &Peer{}
+	peer := &domain.Peer{}
 	err := res.Scan(&peer.ID, &peer.Role,
 		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
 

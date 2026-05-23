@@ -1,22 +1,24 @@
-package internal
+package service
 
 import (
 	"context"
 	"errors"
 	"net/netip"
+	"signal/internal/domain"
+	"signal/internal/repository"
 
 	"github.com/google/uuid"
 )
 
 type PeerService struct {
-	pr *PeerManager
+	pr *repository.PeerManager
 }
 
-func NewPeerService(pr *PeerManager) *PeerService {
+func NewPeerService(pr *repository.PeerManager) *PeerService {
 	return &PeerService{pr: pr}
 }
 
-func (ps *PeerService) RegisterPeer(ctx context.Context, p Peer) error {
+func (ps *PeerService) RegisterPeer(ctx context.Context, p domain.Peer) error {
 	isExists, err := ps.pr.ExistsByID(ctx, p.ID)
 	if err != nil {
 		return err
@@ -28,7 +30,7 @@ func (ps *PeerService) RegisterPeer(ctx context.Context, p Peer) error {
 	return err
 }
 
-func (ps *PeerService) UpdatePeerRole(ctx context.Context, id uuid.UUID, role Role) error {
+func (ps *PeerService) UpdatePeerRole(ctx context.Context, id uuid.UUID, role domain.Role) error {
 	isExists, err := ps.pr.ExistsByID(ctx, id)
 	if err != nil {
 		return err
@@ -97,7 +99,7 @@ func (ps *PeerService) GetLastSlavePeerIP(ctx context.Context) (*netip.AddrPort,
 }
 
 func (ps *PeerService) GetMasterIP(ctx context.Context) (*netip.AddrPort, error) {
-	peer, err := ps.pr.GetByRole(ctx, MasterRole)
+	peer, err := ps.pr.GetByRole(ctx, domain.MasterRole)
 	if err != nil {
 		return nil, err
 	}
