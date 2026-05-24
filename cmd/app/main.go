@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"os"
+	"signal/internal/api"
 	"signal/internal/repository"
-	"signal/internal/server"
 
 	"github.com/joho/godotenv"
 )
@@ -29,6 +29,6 @@ func main() {
 		panic(err)
 	}
 
-	srv := server.InitHandler(pr)
+	srv := api.InitServer(pr)
 	srv.Run()
 }

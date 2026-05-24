@@ -1,7 +1,21 @@
 CREATE TABLE IF NOT EXISTS peers (
-    id              UUID PRIMARY KEY,
     role            TEXT NOT NULL,
-    is_online       BOOLEAN   DEFAULT false,
-    addr_port       TEXT NOT NULL,
-    connection_time TIMESTAMP NOT NULL
+    is_online       BOOLEAN   DEFAULT true,
+    addr_port       TEXT NOT NULL UNIQUE,
+    last_seen TIMESTAMP NOT NULL
 );
+
+INSERT INTO peers (role, is_online, addr_port, last_seen) VALUES
+
+('master', TRUE, '192.168.1.10:8000', CURRENT_TIMESTAMP),
+('master', TRUE, '192.168.1.10:8001', CURRENT_TIMESTAMP),
+('master', TRUE, '192.168.1.10:8002', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.20:9000', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.20:9001', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.20:9002', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.21:9000', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.21:9001', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.21:9002', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.22:9000', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.22:9001', CURRENT_TIMESTAMP),
+('slave',  TRUE, '192.168.1.22:9002', CURRENT_TIMESTAMP);

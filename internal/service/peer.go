@@ -2,12 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 	"net/netip"
 	"signal/internal/domain"
 	"signal/internal/repository"
-
-	"github.com/google/uuid"
 )
 
 type PeerService struct {
@@ -18,109 +15,66 @@ func NewPeerService(pr *repository.PeerManager) *PeerService {
 	return &PeerService{pr: pr}
 }
 
-func (ps *PeerService) RegisterPeer(ctx context.Context, p domain.Peer) error {
-	isExists, err := ps.pr.ExistsByID(ctx, p.ID)
-	if err != nil {
-		return err
-	}
-	if isExists {
-		return errors.New("Peer already registered")
-	}
-	err = ps.pr.Insert(ctx, p)
+func (ps *PeerService) AddPeer(ctx context.Context, peer domain.Peer) error {
+	err := ps.pr.Insert(ctx, peer)
 	return err
 }
 
-func (ps *PeerService) UpdatePeerRole(ctx context.Context, id uuid.UUID, role domain.Role) error {
-	isExists, err := ps.pr.ExistsByID(ctx, id)
+func (ps *PeerService) DeletePeer(ctx context.Context, addrPort netip.AddrPort) error {
+	err := ps.pr.Delete(ctx, addrPort)
+	return err
+}
+
+func (ps *PeerService) SetRole(ctx context.Context, addrPort netip.AddrPort, role domain.Role) error {
+	peer, err := ps.pr.GetByAddrPort(ctx, addrPort)
 	if err != nil {
-		return err
-	}
-	if !isExists {
-		return errors.New("Peer does not exists")
-	}
-	peer, err := ps.pr.GetByID(ctx, id)
-	if err != nil {
-		return err
+		return nil
 	}
 	peer.Role = role
-	err = ps.pr.Insert(ctx, *peer)
+	err = ps.pr.Save(ctx, *peer)
 	return err
 }
 
-func (ps *PeerService) UpdatePeerOnlineStatus(ctx context.Context, id uuid.UUID, onlineStatus bool) error {
-	isExists, err := ps.pr.ExistsByID(ctx, id)
+func (ps *PeerService) SetOnline(ctx context.Context, addrPort netip.AddrPort, isOnline bool) error {
+	peer, err := ps.pr.GetByAddrPort(ctx, addrPort)
 	if err != nil {
 		return err
 	}
-	if !isExists {
-		return errors.New("Peer does not exists")
-	}
-	peer, err := ps.pr.GetByID(ctx, id)
-	if err != nil {
-		return err
-	}
-	peer.IsOnline = onlineStatus
-	err = ps.pr.Insert(ctx, *peer)
+
+	peer.IsOnline = isOnline
+	err = ps.pr.Save(ctx, *peer)
 	return err
 }
 
-func (ps *PeerService) UpdatePeerAddrPort(ctx context.Context, id uuid.UUID, AddrPort string) error {
-	isExists, err := ps.pr.ExistsByID(ctx, id)
-	if err != nil {
-		return err
-	}
-	if !isExists {
-		return errors.New("Peer does not exists")
-	}
-	peer, err := ps.pr.GetByID(ctx, id)
-	if err != nil {
-		return err
-	}
-	peer.AddrPort = AddrPort
-	err = ps.pr.Insert(ctx, *peer)
-	return err
-}
-
-func (ps *PeerService) RemovePeer(ctx context.Context, id uuid.UUID) error {
-	err := ps.pr.DeleteByID(ctx, id)
-	return err
-}
-
-func (ps *PeerService) GetLastSlavePeerIP(ctx context.Context) (*netip.AddrPort, error) {
-	peer, err := ps.pr.GetLastSlaveByTime(ctx)
+func (ps *PeerService) GetMastersAddrPort(ctx context.Context) ([]netip.AddrPort, error) {
+	peers, err := ps.pr.GetByRole(ctx, domain.MasterRole)
 	if err != nil {
 		return nil, err
 	}
-	AddrPort, err := netip.ParseAddrPort(peer.AddrPort)
+	var addrs []netip.AddrPort
+	for _, peer := range peers {
+		addrs = append(addrs, netip.MustParseAddrPort(peer.AddrPort))
+	}
+	return addrs, nil
+}
+
+func (ps *PeerService) GetSlavesAddrPort(ctx context.Context) ([]netip.AddrPort, error) {
+	peers, err := ps.pr.GetByRole(ctx, domain.SlaveRole)
 	if err != nil {
 		return nil, err
 	}
-	return &AddrPort, nil
+	var addrs []netip.AddrPort
+	for _, peer := range peers {
+		addrs = append(addrs, netip.MustParseAddrPort(peer.AddrPort))
+	}
+	return addrs, nil
 }
 
-func (ps *PeerService) GetMasterIP(ctx context.Context) (*netip.AddrPort, error) {
-	peer, err := ps.pr.GetByRole(ctx, domain.MasterRole)
-	if err != nil {
-		return nil, err
+func (ps *PeerService) Killer(ctx context.Context, periodInSeconds uint) {
+	for true {
+		err := ps.pr.SetOffline(ctx, periodInSeconds)
+		if err != nil {
+			break
+		}
 	}
-	AddrPort, err := netip.ParseAddrPort(peer.AddrPort)
-	if err != nil {
-		return nil, err
-	}
-	return &AddrPort, nil
-}
-
-func (ps *PeerService) UpdatePeerOnlineStatusByIP(ctx context.Context, onlineStatus bool, addrPort netip.AddrPort) error {
-	peer, err := ps.pr.GetPeerByAddrPort(ctx, addrPort)
-	if err != nil {
-		return err
-	}
-	peer.IsOnline = onlineStatus
-	err = ps.pr.Insert(ctx, *peer)
-	return err
-}
-
-func (ps *PeerService) IsEmpty(ctx context.Context) bool {
-	exists, _ := ps.pr.IsEmpty(ctx)
-	return exists
 }
