@@ -166,7 +166,7 @@ func (p *PeerManager) GetPeerByAddrPort(ctx context.Context, addrPort netip.Addr
 
 func (p *PeerManager) IsEmpty(ctx context.Context) (bool, error) {
 	query := `
-		SELECT EXISTS (SELECT 1 FROM peers LIMIT 1)
+		SELECT NOT EXISTS (SELECT 1 FROM peers LIMIT 1)
 	`
 	var exists bool
 	err := p.db.QueryRow(ctx, query).Scan(&exists)
