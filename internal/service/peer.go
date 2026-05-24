@@ -109,3 +109,18 @@ func (ps *PeerService) GetMasterIP(ctx context.Context) (*netip.AddrPort, error)
 	}
 	return &AddrPort, nil
 }
+
+func (ps *PeerService) UpdatePeerOnlineStatusByIP(ctx context.Context, onlineStatus bool, addrPort netip.AddrPort) error {
+	peer, err := ps.pr.GetPeerByAddrPort(ctx, addrPort)
+	if err != nil {
+		return err
+	}
+	peer.IsOnline = onlineStatus
+	err = ps.pr.Insert(ctx, *peer)
+	return err
+}
+
+func (ps *PeerService) IsEmpty(ctx context.Context) bool {
+	exists, _ := ps.pr.IsEmpty(ctx)
+	return exists
+}

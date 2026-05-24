@@ -2,14 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"signal/internal/domain"
 	"signal/internal/repository"
-	"signal/internal/service"
-	"time"
+	"signal/internal/server"
 
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
 
@@ -32,46 +28,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ps := service.NewPeerService(pr)
 
-	test_master_peer := domain.NewPeer(
-		uuid.New(),
-		domain.MasterRole,
-		true,
-		"192.0.0.1:1458",
-		time.Now(),
-	)
-
-	test_slave_peer := domain.NewPeer(
-		uuid.New(),
-		domain.SlaveRole,
-		true,
-		"102.1.23.1:1321",
-		time.Now(),
-	)
-
-	ps.RegisterPeer(ctx, test_master_peer)
-	ps.RegisterPeer(ctx, test_slave_peer)
-
-	ap_master, err := ps.GetMasterIP(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	ap_slave, err := ps.GetLastSlavePeerIP(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Master IP:port : ", ap_master.String())
-	fmt.Println("Slave IP:port : ", ap_slave.String())
-
-	ps.UpdatePeerAddrPort(ctx, test_slave_peer.ID, "102.1.23.1:1322")
-	ap_slave2, err := ps.GetLastSlavePeerIP(ctx)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Slave IP:port : ", ap_slave2.String())
-
-	ps.RemovePeer(ctx, test_slave_peer.ID)
+	srv := server.InitHandler(pr)
+	srv.Run()
 }

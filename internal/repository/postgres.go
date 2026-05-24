@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"signal/internal/domain"
 
 	"github.com/google/uuid"
@@ -144,4 +145,34 @@ func (p *PeerManager) GetLastSlaveByTime(ctx context.Context) (*domain.Peer, err
 	}
 	return peer, nil
 
+}
+
+func (p *PeerManager) GetPeerByAddrPort(ctx context.Context, addrPort netip.AddrPort) (*domain.Peer, error) {
+	query := `
+	SELECT id, role, is_online, addr_port, connection_time
+	FROM peers WHERE addr_port = $1
+	`
+	res := p.db.QueryRow(ctx, query, addrPort.String())
+	peer := &domain.Peer{}
+	err := res.Scan(&peer.ID, &peer.Role,
+		&peer.IsOnline, &peer.AddrPort, &peer.ConnectionTime)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errors.New("Slave is not exists")
+	}
+	return peer, nil
+
+}
+
+func (p *PeerManager) IsEmpty(ctx context.Context) (bool, error) {
+	query := `
+		SELECT EXISTS (SELECT 1 FROM users LIMIT 1)
+	`
+	var exists bool
+	err := p.db.QueryRow(ctx, query).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }
