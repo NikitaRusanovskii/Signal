@@ -36,13 +36,14 @@ func (ps *PeerService) SetRole(ctx context.Context, addrPort netip.AddrPort, rol
 	return err
 }
 
-func (ps *PeerService) SetOnline(ctx context.Context, addrPort netip.AddrPort, isOnline bool) error {
+func (ps *PeerService) SetOnlineAndLastSeen(ctx context.Context, addrPort netip.AddrPort, isOnline bool) error {
 	peer, err := ps.pr.GetByAddrPort(ctx, addrPort)
 	if err != nil {
 		return err
 	}
 
 	peer.IsOnline = isOnline
+	peer.LastSeen = time.Now()
 	err = ps.pr.Save(ctx, *peer)
 	return err
 }

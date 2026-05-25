@@ -85,7 +85,7 @@ func InitServer(pr *repository.PeerManager) *Server {
 	})
 
 	r.PATCH("/heartbeat", func(c *gin.Context) {
-		err := s.SetOnline(c, netip.MustParseAddrPort(c.Request.RemoteAddr), true)
+		err := s.SetOnlineAndLastSeen(c, netip.MustParseAddrPort(c.Request.RemoteAddr), true)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "error when heartbeat"})
 			return
