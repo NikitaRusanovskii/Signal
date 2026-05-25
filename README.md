@@ -15,7 +15,7 @@
 
 ## Технологии
 
-- [Go](https://go.dev/) (1.21+)
+- [Go](https://go.dev/) (1.26.1)
 - [Gin](https://gin-gonic.com/) — веб-фреймворк
 - [pgx](https://github.com/jackc/pgx) — драйвер и пул соединений с PostgreSQL
 - [golang-migrate](https://github.com/golang-migrate/migrate) — миграции БД
