@@ -54,7 +54,7 @@ func NewPeerManager(db *pgxpool.Pool) (*PeerManager, error) {
 
 func (p *PeerManager) Insert(ctx context.Context, peer domain.Peer) error {
 	query := `
-		INSERT INTO peers (role, is_online, addr_port, connection_time)
+		INSERT INTO peers (role, is_online, addr_port, last_seen)
 		SELECT ($1, $2, $3, $4)
 		WHERE NOT EXISTS (
     		SELECT 1 FROM peers WHERE addr_port = $3
@@ -69,13 +69,13 @@ func (p *PeerManager) Insert(ctx context.Context, peer domain.Peer) error {
 
 func (p *PeerManager) Save(ctx context.Context, peer domain.Peer) error {
 	query := `
-		INSERT INTO peers (role, is_online, addr_port, connection_time)
+		INSERT INTO peers (role, is_online, addr_port, last_seen)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (addr_port)
 			DO UPDATE SET
 			role = EXCLUDED.role,
 			is_online = EXCLUDED.is_online,
-			connection_time = EXCLUDED.connection_time
+			last_seen = EXCLUDED.last_seen
 	`
 
 	_, err := p.db.Exec(ctx, query, peer.Role, peer.IsOnline,
@@ -95,7 +95,7 @@ func (p *PeerManager) Delete(ctx context.Context, addrPort netip.AddrPort) error
 
 func (p *PeerManager) GetByRole(ctx context.Context, role domain.Role) ([]*domain.Peer, error) {
 	query := `
-	SELECT role, is_online, addr_port, connection_time
+	SELECT role, is_online, addr_port, last_seen
 	FROM peers
 	WHERE role = $1
 	`
@@ -127,7 +127,7 @@ func (p *PeerManager) GetByRole(ctx context.Context, role domain.Role) ([]*domai
 
 func (p *PeerManager) GetByAddrPort(ctx context.Context, addrPort netip.AddrPort) (*domain.Peer, error) {
 	query := `
-	SELECT role, is_online, addr_port, connection_time
+	SELECT role, is_online, addr_port, last_seen
 	FROM peers
 	WHERE addr_port = $1
 	`

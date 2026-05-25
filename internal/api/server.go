@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/netip"
 	"signal/internal/domain"
@@ -95,7 +96,15 @@ func InitServer(pr *repository.PeerManager) *Server {
 	return &Server{router: r, service: s}
 }
 
-func (h *Server) Run() error {
-	err := h.router.Run()
+func (s *Server) Run() error {
+	err := s.router.Run()
 	return err
+}
+
+func (s *Server) RunInactivePeerKiller(ctx context.Context, periodInSeconds uint) {
+	go func() {
+		for true {
+			s.service.Killer(ctx, periodInSeconds)
+		}
+	}()
 }

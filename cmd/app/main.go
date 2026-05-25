@@ -30,5 +30,6 @@ func main() {
 	}
 
 	srv := api.InitServer(pr)
+	srv.RunInactivePeerKiller(ctx, 30)
 	srv.Run()
 }

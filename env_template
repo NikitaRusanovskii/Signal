@@ -1,3 +1,4 @@
+postgresql://[username]:[password]@[host]:[port]/[database]
 DATABASE_URL=<URL>
 
 DOCKER_PG_USER=<TEXT>

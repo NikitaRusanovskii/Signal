@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"signal/internal/domain"
 	"signal/internal/repository"
+	"time"
 )
 
 type PeerService struct {
@@ -71,10 +72,17 @@ func (ps *PeerService) GetSlavesAddrPort(ctx context.Context) ([]netip.AddrPort,
 }
 
 func (ps *PeerService) Killer(ctx context.Context, periodInSeconds uint) {
-	for true {
-		err := ps.pr.SetOffline(ctx, periodInSeconds)
-		if err != nil {
-			break
+	ticker := time.NewTicker(time.Duration(periodInSeconds) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			err := ps.pr.SetOffline(ctx, periodInSeconds)
+			if err != nil {
+				return
+			}
 		}
 	}
 }
