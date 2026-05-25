@@ -1,0 +1,5 @@
+.gitignore
+.env
+env_template
+LICENSE
+README.md

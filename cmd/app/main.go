@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"signal/internal/api"
 	"signal/internal/repository"
@@ -10,10 +11,11 @@ import (
 )
 
 func main() {
+	var dbURL string
 	if err := godotenv.Load(); err != nil {
-		panic("godotenv.Load() error")
+		fmt.Errorf("godotenv.Loat() error: ", err)
 	}
-	dbURL := os.Getenv("DATABASE_URL")
+	dbURL = os.Getenv("DATABASE_URL")
 
 	ctx := context.Background()
 	cm := repository.NewConnectionManager(nil)
